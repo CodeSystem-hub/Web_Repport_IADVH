@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Solicitações de Rescisão</title>
+    <link rel="icon" href="imagens/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Solicitações de Rescisão</h1>
+                <div class="header-subtitle" id="userGreeting"></div>
+            </div>
+            <div class="header-right">
+                <div class="header-logo" aria-label="Logo institucional">
+                    <img src="imagens/Logo_IADVH.png" alt="IADVH" loading="eager">
+                </div>
+                <div class="header-actions">
+                    <div class="header-datetime" id="currentDateTime" aria-label="Data e hora atual"></div>
+                    <div class="header-actions-buttons">
+                        <button id="syncBtn" class="btn btn-primary">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M20 12a8 8 0 0 0-14.9-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M4 4v4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M4 12a8 8 0 0 0 14.9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Sincronizar
+                        </button>
+                        <button id="logoutBtn" class="btn btn-secondary">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M10 17l1 0c4 0 7-2.5 7-5s-3-5-7-5h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M13 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M6 9l-3 3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M20 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Sair
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPIs -->
+        <div class="kpi-container" id="kpiContainer">
+            <div class="kpi-card">
+                <h3>Total</h3>
+                <span class="kpi-value" id="totalCount">0</span>
+            </div>
+            <div class="kpi-card">
+                <h3>Finalizados</h3>
+                <span class="kpi-value" id="completedCount">0</span>
+            </div>
+            <div class="kpi-card">
+                <h3>Cancelados</h3>
+                <span class="kpi-value" id="cancelledCount">0</span>
+            </div>
+            <div class="kpi-card">
+                <h3>Em Andamento</h3>
+                <span class="kpi-value" id="inProgressCount">0</span>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-container">
+            <h3>Filtros</h3>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="unidadeFilter">Unidade</label>
+                    <select id="unidadeFilter" class="filter-select">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="categoriaFilter">Categoria</label>
+                    <select id="categoriaFilter" class="filter-select">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="etapaFilter">Etapa</label>
+                    <select id="etapaFilter" class="filter-select">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">Todos</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Cancelado">Cancelado</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="dataInicioFilter">Data Início</label>
+                    <input type="date" id="dataInicioFilter" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="dataFimFilter">Data Fim</label>
+                    <input type="date" id="dataFimFilter" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="searchFilter">Buscar</label>
+                    <input type="text" id="searchFilter" class="filter-input" placeholder="Buscar...">
+                </div>
+                <div class="filter-group">
+                    <div class="filter-actions">
+                        <button id="applyFiltersBtn" class="btn btn-primary btn-sm btn-icon-only" type="button" aria-label="Aplicar filtros" title="Aplicar filtros">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button id="clearFiltersBtn" class="btn btn-secondary btn-sm btn-icon-only" type="button" aria-label="Limpar filtros" title="Limpar filtros">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>Solicitações por Categoria</h3>
+                <canvas id="categoriaChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Solicitações por Unidade</h3>
+                <canvas id="unidadeChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Status das Solicitações</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Evolução por Período</h3>
+                <canvas id="evolucaoChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Lista de Solicitações</h3>
+                <div class="table-actions">
+                    <div class="list-controls">
+                        <div class="list-tabs" role="tablist" aria-label="Lista de solicitações">
+                            <button id="tabAllBtn" class="btn btn-secondary btn-sm list-tab" type="button" aria-selected="true">Todas</button>
+                            <button id="tabPinnedBtn" class="btn btn-secondary btn-sm list-tab" type="button" aria-selected="false">Fixadas</button>
+                        </div>
+                        <select id="sortSelect" class="filter-select sort-select" aria-label="Ordenação">
+                            <option value="recent">Mais recentes</option>
+                            <option value="dateAsc">Data (mais antiga)</option>
+                            <option value="unidade">Unidade</option>
+                            <option value="status">Status</option>
+                            <option value="etapa">Etapa</option>
+                        </select>
+                        <select id="pageSizeSelect" class="filter-select sort-select" aria-label="Quantidade por página">
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <div class="view-toggle" aria-label="Modo de visualização">
+                            <button id="viewCardsBtn" class="btn btn-secondary btn-sm btn-icon-only" type="button" aria-label="Ver em cards" title="Cards">
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 4h7v7H4V4z" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M13 4h7v7h-7V4z" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M4 13h7v7H4v-7z" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M13 13h7v7h-7v-7z" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                </span>
+                            </button>
+                            <button id="viewListBtn" class="btn btn-secondary btn-sm btn-icon-only" type="button" aria-label="Ver em lista" title="Lista">
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M8 6h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M8 12h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M8 18h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M3 6h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M3 12h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M3 18h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <span class="table-count">Mostrando <span id="showingCount">0</span> de <span id="totalRecords">0</span> registros</span>
+                    <button id="exportConfigBtn" class="btn btn-secondary" type="button">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M8 9l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        Baixar
+                    </button>
+                </div>
+            </div>
+            
+            <div id="cardsContainer" class="cards-grid">
+                <div class="no-data">Carregando dados...</div>
+            </div>
+
+            <div id="tableWrapper" class="table-wrapper" style="display: none;">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 44px;"></th>
+                            <th>Unidade</th>
+                            <th>Nome + Função</th>
+                            <th>Etapa Atual</th>
+                            <th>Data de Abertura</th>
+                            <th>Solicitante</th>
+                            <th>Atendente Atual</th>
+                            <th>Confirmações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" class="no-data">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-footer">
+                <button id="loadMoreBtn" class="btn btn-primary" style="display: none;">
+                    Carregar Mais
+                </button>
+            </div>
+        </div>
+    <footer class="app-footer">© 2026 Web Repport - IADVH, todos os direitos reservados.</footer>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+                <h3>Detalhes da Solicitação</h3>
+                <button id="closeModalBtn" class="modal-close">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Conteúdo será preenchido via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="syncModal" class="modal sync-modal">
+        <div class="modal-content modal-content-sm">
+            <div class="modal-header">
+                <h3>Sincronização</h3>
+                <button id="closeSyncModalBtn" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-detail-group">
+                    <p id="syncMessage">Sincronização concluída.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportConfigModal" class="modal export-config-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Baixar Planilha</h3>
+                <button id="closeExportConfigModalBtn" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-config-top">
+                    <div class="export-format">
+                        <label class="export-format-option">
+                            <input type="radio" name="exportFormat" value="xlsx" checked>
+                            XLSX
+                        </label>
+                        <label class="export-format-option">
+                            <input type="radio" name="exportFormat" value="csv">
+                            CSV
+                        </label>
+                    </div>
+                </div>
+                <div class="export-columns">
+                    <div class="export-columns-header">
+                        <span>Colunas</span>
+                        <span class="export-columns-hint">Marque e ordene</span>
+                    </div>
+                    <div id="exportColumnsList" class="export-columns-list" role="list"></div>
+                </div>
+                <div class="export-config-actions">
+                    <button id="exportConfigCancelBtn" class="btn btn-secondary" type="button">Cancelar</button>
+                    <button id="exportConfigDownloadBtn" class="btn btn-primary" type="button">Baixar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader Global -->
+    <div id="globalLoader" class="global-loader" style="display: none;">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

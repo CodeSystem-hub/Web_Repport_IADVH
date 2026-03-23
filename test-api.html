@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão API RM TOTVS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Conexão API RM TOTVS</h1>
+    
+    <div class="test-section">
+        <h2>Informações da API</h2>
+        <p><strong>URL:</strong> <span id="apiUrl"></span></p>
+        <p><strong>Status CORS:</strong> <span id="corsStatus">Testando...</span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Teste de Conexão Sem Autenticação</h2>
+        <button onclick="testConnection()">Testar Conexão</button>
+        <div id="connectionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Teste de Autenticação</h2>
+        <div>
+            <label>Usuário: <input type="text" id="testUser"></label><br>
+            <label>Senha: <input type="password" id="testPass"></label><br>
+            <button onclick="testAuth()">Testar Autenticação</button>
+        </div>
+        <div id="authResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Possíveis Problemas</h2>
+        <ul>
+            <li><strong>CORS:</strong> O servidor da API precisa permitir requisições do seu domínio</li>
+            <li><strong>URL incorreta:</strong> Verifique se a URL da API está correta</li>
+            <li><strong>Autenticação:</strong> Verifique usuário/senha e permissões</li>
+            <li><strong>Rede:</strong> Verifique sua conexão com a internet</li>
+            <li><strong>Firewall:</strong> A API pode estar bloqueada por firewall</li>
+        </ul>
+    </div>
+
+    <script>
+        const API_URL = 'https://institutode137168.rm.cloudtotvs.com.br:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/CUBO.P.0117/0/P/?context=CODCOLIGADA%3D0';
+        
+        document.getElementById('apiUrl').textContent = API_URL;
+
+        // Testar CORS
+        async function testCORS() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'OPTIONS', // Método preflight
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Authorization, Content-Type'
+                    }
+                });
+                
+                const corsHeaders = response.headers.get('Access-Control-Allow-Origin');
+                
+                if (corsHeaders === '*' || corsHeaders.includes(window.location.origin)) {
+                    document.getElementById('corsStatus').innerHTML = 
+                        '<span class="success">✓ CORS configurado</span>';
+                } else {
+                    document.getElementById('corsStatus').innerHTML = 
+                        '<span class="error">✗ Problema de CORS detectado</span>';
+                }
+                
+            } catch (error) {
+                document.getElementById('corsStatus').innerHTML = 
+                    '<span class="error">✗ Erro ao testar CORS: ' + error.message + '</span>';
+            }
+        }
+
+        // Testar conexão básica
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<span class="info">Testando...</span>';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                let resultHTML = `<p><strong>Status:</strong> ${response.status} ${response.statusText}</p>`;
+                resultHTML += `<p><strong>Headers:</strong></p><pre>${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}</pre>`;
+                
+                if (response.ok) {
+                    resultHTML = '<span class="success">✓ Conexão bem-sucedida!</span>' + resultHTML;
+                } else if (response.status === 401) {
+                    resultHTML = '<span class="warning">⚠ API requer autenticação (esperado)</span>' + resultHTML;
+                } else {
+                    resultHTML = '<span class="error">✗ Erro na conexão</span>' + resultHTML;
+                }
+                
+                resultDiv.innerHTML = resultHTML;
+                
+            } catch (error) {
+                resultDiv.innerHTML = 
+                    '<span class="error">✗ Erro: ' + error.message + '</span>' +
+                    '<p>Detalhes: ' + error + '</p>';
+            }
+        }
+
+        // Testar autenticação
+        async function testAuth() {
+            const username = document.getElementById('testUser').value;
+            const password = document.getElementById('testPass').value;
+            const resultDiv = document.getElementById('authResult');
+            
+            if (!username || !password) {
+                resultDiv.innerHTML = '<span class="error">Preencha usuário e senha</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<span class="info">Testando autenticação...</span>';
+            
+            try {
+                const authString = btoa(`${username}:${password}`);
+                
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${authString}`,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                let resultHTML = `<p><strong>Status:</strong> ${response.status} ${response.statusText}</p>`;
+                
+                if (response.ok) {
+                    try {
+                        const data = await response.json();
+                        resultHTML += `<p><strong>Dados recebidos:</strong></p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                        resultHTML = '<span class="success">✓ Autenticação bem-sucedida!</span>' + resultHTML;
+                    } catch (e) {
+                        resultHTML += '<p><span class="warning">⚠ Resposta recebida, mas não é JSON válido</span></p>';
+                    }
+                } else if (response.status === 401) {
+                    resultHTML = '<span class="error">✗ Credenciais inválidas</span>' + resultHTML;
+                } else {
+                    resultHTML = '<span class="error">✗ Erro na autenticação</span>' + resultHTML;
+                }
+                
+                resultDiv.innerHTML = resultHTML;
+                
+            } catch (error) {
+                resultDiv.innerHTML = 
+                    '<span class="error">✗ Erro: ' + error.message + '</span>' +
+                    '<p>Detalhes: ' + error + '</p>';
+            }
+        }
+
+        // Iniciar testes automáticos
+        testCORS();
+        testConnection();
+        
+    </script>
+</body>
+</html>
