@@ -10,7 +10,7 @@ const EMAIL_CONFIG = {
     templateId: 'template_ppuqkac',
     publicKey: 'FaepqPvA2ZD8Qzsy8',
     fromEmail: 'mobile@institutoiadvh.org.br',
-    fallbackToEmail: 'wanderson.diniz@iadvh.org.br'
+    cancelToEmail: 'equiperescisao@iadvh.org.br'
 };
 
 // Estado global da aplicação
@@ -950,13 +950,10 @@ const uiManager = {
             if (kind) statusEl.classList.add(kind);
         };
 
-        let toEmail = (uiManager.getResponsavelEmail(item) || '').trim();
-        let isFallback = false;
-
+        const toEmail = String(EMAIL_CONFIG.cancelToEmail || '').trim();
         if (!toEmail) {
-            toEmail = EMAIL_CONFIG.fallbackToEmail;
-            isFallback = true;
-            console.warn(`E-mail do responsável não encontrado. Usando fallback: ${toEmail}`);
+            setStatus('E-mail de destino para cancelamento não configurado.', 'error');
+            return;
         }
 
         if (!window.emailjs || typeof window.emailjs.init !== 'function') {
@@ -2531,7 +2528,7 @@ const confirmModalHTML = `
     <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 400px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); position: relative;">
         <span class="close" style="position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
         <h3 style="margin-top: 0; color: #333;">Confirmar Cancelamento</h3>
-        <p style="margin: 15px 0;">Ao confirmar, será enviado um e-mail ao atendente responsável para formalizar a solicitação de cancelamento. Deseja continuar?</p>
+        <p style="margin: 15px 0;">Ao confirmar, será enviado um e-mail para equiperescisao@iadvh.org.br para formalizar a solicitação de cancelamento. Deseja continuar?</p>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button id="confirmCancelNo" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Não</button>
             <button id="confirmCancelYes" style="padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Sim, Solicitar Cancelamento</button>
