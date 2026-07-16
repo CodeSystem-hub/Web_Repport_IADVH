@@ -10,7 +10,7 @@ const EMAIL_CONFIG = {
     templateId: 'template_ppuqkac',
     publicKey: 'FaepqPvA2ZD8Qzsy8',
     fromEmail: 'mobile@institutoiadvh.org.br',
-    cancelToEmail: 'equiperescisao@iadvh.org.br'
+    cancelToEmail: 'equiperescisao@iadvh.org.br, outro@exemplo.com'
 };
 
 // Estado global da aplicação
