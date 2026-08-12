@@ -10,7 +10,7 @@ const EMAIL_CONFIG = {
     templateId: 'template_ppuqkac',
     publicKey: 'FaepqPvA2ZD8Qzsy8',
     fromEmail: 'mobile@institutoiadvh.org.br',
-    cancelToEmail: 'equiperescisao@iadvh.org.br, coordenacao.terceiros@emserh.ma.gov.br, hevila.fortes@emserh.ma.gov.br'
+    cancelToEmail: 'equiperescisao@iadvh.org.br, coordenacao.terceiros@emserh.ma.gov.br, hevila.fortes@emserh.ma.gov.br, luciana.fontinele@emserh.ma.gov.br, mayara.siqueira@emserh.ma.gov.br, gerencia.rt@emserh.ma.gov.br '
 };
 
 // Estado global da aplicação
